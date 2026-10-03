@@ -53,10 +53,10 @@ module mac #(
             // Multiply-Accumulate Logic
             if (clr_acc) begin
                 // Reset accumulator with initial product (Cycle 0 of new compute)
-                acc_reg <= mult_product;
+                acc_reg <= ACC_WIDTH'(mult_product);
             end else begin
                 // Accumulate incoming product into previous total
-                acc_reg <= acc_reg + mult_product;
+                acc_reg <= ACC_WIDTH'(mult_product) + acc_reg;
             end
         end
     end

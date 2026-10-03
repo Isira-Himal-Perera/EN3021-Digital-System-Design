@@ -1,0 +1,20 @@
+# Quartus compilation and intermediate folders
+**/db/
+**/incremental_db/
+**/greybox/
+**/hc_output/
+**/output_files/
+**/simulation/
+
+# Quartus temporary, lock, and user configuration files
+*.qws
+*.rpt
+*.summary
+*.smsg
+*.jdi
+*.pin
+*.done
+*.qdf
+*.bak
+*.flock
+*.chg

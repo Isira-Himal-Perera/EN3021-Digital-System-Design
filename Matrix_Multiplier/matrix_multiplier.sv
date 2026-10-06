@@ -32,17 +32,22 @@ module matrix_multiply_top #(
     // -------------------------------------------------------------------------
     // Internal Signals
     // -------------------------------------------------------------------------
+    // Controller -> Imput RAM
     logic [ADDR_WIDTH-1:0]                                  rd_addr_a;
     logic [ADDR_WIDTH-1:0]                                  rd_addr_b;
     
+    // Imput RAM -> Skew buffer
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  ram_dout_a;
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  ram_dout_b;
 
+    // Skew buffer -> MAC Array
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  skew_dout_a;
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  skew_dout_b;
 
-    logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0] mac_matrix_out;
+    // MAC Array -> Output RAM
+    logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0]   mac_matrix_out;
 
+    // Controller -> ...
     logic                                                   clear_acc;
     logic                                                   skew_en;
     logic                                                   mac_en;
@@ -89,6 +94,7 @@ module matrix_multiply_top #(
         .clk        (clk),
         .rst_n      (rst_n),
         .enable     (skew_en),
+        .data_valid (skew_rd_en),
         .data_in    (ram_dout_a),
         .data_out   (skew_dout_a)
     );
@@ -118,9 +124,10 @@ module matrix_multiply_top #(
         .busy       (busy),         // 
         .done       (done),         // 
         .clear_acc  (clear_acc),    // clr_acc
-        .skew_en    (skew_en),      // mem_rd_en
+        .skew_en    (skew_en),      // 
+        .mem_rd_en  (mem_rd_en),    //
         .mac_en     (mac_en),       // enable
-        .capture_en (capture_en),   // mem_wr_en
+        .mem_wr_en  (capture_en),   // mem_wr_en
         .rd_addr_a  (rd_addr_a),    // ??
         .rd_addr_b  (rd_addr_b)     // ??
     );

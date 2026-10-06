@@ -24,7 +24,6 @@ module matrix_multiply_top #(
     input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                   wr_data_b,
 
     // Output Matrix Selection & Output Interface
-    input  logic [ADDR_WIDTH-1:0]                                   wr_matrix_id,
     input  logic [ADDR_WIDTH-1:0]                                   rd_matrix_id,
     output logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0]    matrix_c_out
 );
@@ -33,8 +32,7 @@ module matrix_multiply_top #(
     // Internal Signals
     // -------------------------------------------------------------------------
     // Controller -> Imput RAM
-    logic [ADDR_WIDTH-1:0]                                  rd_addr_a;
-    logic [ADDR_WIDTH-1:0]                                  rd_addr_b;
+    logic [ADDR_WIDTH-1:0]                                  rd_addr;
     
     // Imput RAM -> Skew buffer
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  ram_dout_a;
@@ -48,15 +46,15 @@ module matrix_multiply_top #(
     logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0]   mac_matrix_out;
 
     // Controller -> ...
-    logic                                                   clear_acc;
-    logic                                                   skew_en;
     logic                                                   mac_en;
+    logic                                                   clr_acc;
+    logic                                                   skew_en;
+    logic                                                   rd_en;
     logic                                                   capture_en;
 
     // -------------------------------------------------------------------------
     // 1. Input Memory Instances 
     // -------------------------------------------------------------------------
-    // ### Checked
     input_ram #(
         .ARRAY_SIZE (ARRAY_SIZE), 
         .DATA_WIDTH (DATA_WIDTH),
@@ -65,8 +63,8 @@ module matrix_multiply_top #(
         .clk        (clk),          
         .write_en   (wr_en_a),      
         .wr_addr    (wr_addr_a),
-        .rd_addr    (rd_addr_a),
         .din        (wr_data_a),
+        .rd_addr    (rd_addr),
         .dout       (ram_dout_a)
     );
 
@@ -78,15 +76,14 @@ module matrix_multiply_top #(
         .clk        (clk),
         .write_en   (wr_en_b),
         .wr_addr    (wr_addr_b),
-        .rd_addr    (rd_addr_b),
         .din        (wr_data_b),
+        .rd_addr    (rd_addr),
         .dout       (ram_dout_b)
     );
 
     // -------------------------------------------------------------------------
     // 2. Input Skew Buffers (A: Row Skew, B: Column Skew)
     // -------------------------------------------------------------------------
-    // ### Checked
     input_skew_buffer #(
         .ARRAY_SIZE (ARRAY_SIZE),
         .DATA_WIDTH (DATA_WIDTH)
@@ -94,7 +91,7 @@ module matrix_multiply_top #(
         .clk        (clk),
         .rst_n      (rst_n),
         .enable     (skew_en),
-        .data_valid (skew_rd_en),
+        .mem_rd_en  (rd_en),
         .data_in    (ram_dout_a),
         .data_out   (skew_dout_a)
     );
@@ -106,6 +103,7 @@ module matrix_multiply_top #(
         .clk        (clk),
         .rst_n      (rst_n),
         .enable     (skew_en),
+        .mem_rd_en  (rd_en),
         .data_in    (ram_dout_b),
         .data_out   (skew_dout_b)
     );
@@ -113,29 +111,26 @@ module matrix_multiply_top #(
     // -------------------------------------------------------------------------
     // 3. Central Controller FSM
     // -------------------------------------------------------------------------
-    // *** Needs Debugin in this module
     matrix_controller #(
         .ARRAY_SIZE (ARRAY_SIZE),
         .ADDR_WIDTH (ADDR_WIDTH)
     ) u_controller (
-        .clk        (clk),          // 
-        .rst_n      (rst_n),        // 
-        .start      (start),        //
-        .busy       (busy),         // 
-        .done       (done),         // 
-        .clear_acc  (clear_acc),    // clr_acc
-        .skew_en    (skew_en),      // 
-        .mem_rd_en  (mem_rd_en),    //
-        .mac_en     (mac_en),       // enable
-        .mem_wr_en  (capture_en),   // mem_wr_en
-        .rd_addr_a  (rd_addr_a),    // ??
-        .rd_addr_b  (rd_addr_b)     // ??
+        .clk        (clk),
+        .rst_n      (rst_n),
+        .start      (start),
+        .busy       (busy),
+        .done       (done),
+        .clr_acc    (clr_acc),
+        .mac_en     (mac_en),
+        .skew_en    (skew_en),
+        .mem_rd_en  (rd_en),
+        .mem_wr_en  (capture_en),
+        .rd_addr_cnt(rd_addr)
     );
 
     // -------------------------------------------------------------------------
     // 4. Systolic MAC Array
     // -------------------------------------------------------------------------
-    // ### Checked
     mac_array #(
         .ARRAY_SIZE (ARRAY_SIZE),
         .DATA_WIDTH (DATA_WIDTH),
@@ -143,17 +138,16 @@ module matrix_multiply_top #(
     ) u_mac_array (
         .clk        (clk),
         .rst_n      (rst_n),
-        .clear_acc  (clear_acc),
+        .clear_acc  (clr_acc),
         .enable     (mac_en),
-        .a_vec   (skew_dout_a),
-        .b_vec   (skew_dout_b),
+        .a_vec      (skew_dout_a),
+        .b_vec      (skew_dout_b),
         .c_matrix   (mac_matrix_out)
     );
 
     // -------------------------------------------------------------------------
     // 5. Output Parallel Memory
     // -------------------------------------------------------------------------
-    // Needes debugging
     output_ram #(
         .ARRAY_SIZE   (ARRAY_SIZE),
         .ACC_WIDTH    (ACC_WIDTH),
@@ -161,10 +155,9 @@ module matrix_multiply_top #(
     ) u_output_ram (
         .clk          (clk),
         .rst_n        (rst_n),
-        .capture_en   (capture_en),
-        .wr_matrix_id (wr_matrix_id),
-        .rd_matrix_id (rd_matrix_id),
-        .matrix_in    (mac_matrix_out),
+        .write_en     (capture_en),
+        .c_matrix     (mac_matrix_out),
+        .rd_addr      (rd_matrix_id),
         .matrix_out   (matrix_c_out)
     );
 

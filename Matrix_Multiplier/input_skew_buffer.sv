@@ -13,17 +13,17 @@ module input_skew_buffer #(
     input  logic                                 mem_rd_en, // When low (0), inputs are forced to 0
     
     // Parallel un-skewed input vector from BRAM/Buffers
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] data_in,
+    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] din,
     
     // Time-skewed output vector fed directly into mac_array
-    output logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] data_out
+    output logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] dout
 );
 
     // Gated input data vector based on the mem_rd_en signal
     logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] effective_data_in;
 
     // Direct zeros into the pipeline when mem_rd_en is 0
-    assign effective_data_in = mem_rd_en ? data_in : '0;
+    assign effective_data_in = mem_rd_en ? din : '0;
 
     genvar i;
     generate
@@ -31,7 +31,7 @@ module input_skew_buffer #(
             
             if (i == 0) begin : gen_no_delay
                 // Row/Col 0 requires 0 cycles delay
-                assign data_out[0] = effective_data_in[0];
+                assign dout[0] = effective_data_in[0];
             end else begin : gen_delay_chain
                 // Row/Col i requires a shift register chain of depth 'i'
                 logic [DATA_WIDTH-1:0] shift_reg [0:i-1];
@@ -53,7 +53,7 @@ module input_skew_buffer #(
                 end
 
                 // Tap the output from the last stage of the shift chain
-                assign data_out[i] = shift_reg[i-1];
+                assign dout[i] = shift_reg[i-1];
             end
 
         end

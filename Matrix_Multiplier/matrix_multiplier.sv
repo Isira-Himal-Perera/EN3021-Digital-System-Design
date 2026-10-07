@@ -1,9 +1,8 @@
-module matrix_multiply_top #(
-    parameter int ARRAY_SIZE = 7,
-    parameter int DATA_WIDTH = 8,
-    parameter int ACC_WIDTH  = 16,
-    parameter int RAM_DEPTH  = 16,
-    parameter int ADDR_WIDTH = $clog2(RAM_DEPTH)
+module matrix_multiplier #(
+    parameter int ARRAY_SIZE = 4,
+    parameter int DATA_WIDTH = 16,
+    parameter int ACC_WIDTH  = 34,
+    parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)
 )(
     input  logic                                                    clk,
     input  logic                                                    rst_n,
@@ -25,7 +24,7 @@ module matrix_multiply_top #(
 
     // Output Matrix Selection & Output Interface
     input  logic [ADDR_WIDTH-1:0]                                   rd_matrix_id,
-    output logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0]    matrix_c_out
+    output logic [ARRAY_SIZE-1:0][ACC_WIDTH-1:0]                    matrix_c_out
 );
 
     // -------------------------------------------------------------------------
@@ -57,8 +56,7 @@ module matrix_multiply_top #(
     // -------------------------------------------------------------------------
     input_ram #(
         .ARRAY_SIZE (ARRAY_SIZE), 
-        .DATA_WIDTH (DATA_WIDTH),
-        .DEPTH      (RAM_DEPTH)
+        .DATA_WIDTH (DATA_WIDTH)
     ) u_input_ram_a (
         .clk        (clk),          
         .write_en   (wr_en_a),      
@@ -70,8 +68,7 @@ module matrix_multiply_top #(
 
     input_ram #(
         .ARRAY_SIZE (ARRAY_SIZE),
-        .DATA_WIDTH (DATA_WIDTH),
-        .DEPTH      (RAM_DEPTH)
+        .DATA_WIDTH (DATA_WIDTH)
     ) u_input_ram_b (
         .clk        (clk),
         .write_en   (wr_en_b),
@@ -92,8 +89,8 @@ module matrix_multiply_top #(
         .rst_n      (rst_n),
         .enable     (skew_en),
         .mem_rd_en  (rd_en),
-        .data_in    (ram_dout_a),
-        .data_out   (skew_dout_a)
+        .din        (ram_dout_a),
+        .dout       (skew_dout_a)
     );
 
     input_skew_buffer #(
@@ -104,8 +101,8 @@ module matrix_multiply_top #(
         .rst_n      (rst_n),
         .enable     (skew_en),
         .mem_rd_en  (rd_en),
-        .data_in    (ram_dout_b),
-        .data_out   (skew_dout_b)
+        .din        (ram_dout_b),
+        .dout       (skew_dout_b)
     );
 
     // -------------------------------------------------------------------------
@@ -138,7 +135,7 @@ module matrix_multiply_top #(
     ) u_mac_array (
         .clk        (clk),
         .rst_n      (rst_n),
-        .clear_acc  (clr_acc),
+        .clr_acc    (clr_acc),
         .enable     (mac_en),
         .a_vec      (skew_dout_a),
         .b_vec      (skew_dout_b),
@@ -151,14 +148,14 @@ module matrix_multiply_top #(
     output_ram #(
         .ARRAY_SIZE   (ARRAY_SIZE),
         .ACC_WIDTH    (ACC_WIDTH),
-        .DEPTH        (RAM_DEPTH)
+        .ADDR_WIDTH   (ADDR_WIDTH)
     ) u_output_ram (
         .clk          (clk),
         .rst_n        (rst_n),
         .write_en     (capture_en),
         .c_matrix     (mac_matrix_out),
         .rd_addr      (rd_matrix_id),
-        .matrix_out   (matrix_c_out)
+        .dout         (matrix_c_out)
     );
 
 endmodule 

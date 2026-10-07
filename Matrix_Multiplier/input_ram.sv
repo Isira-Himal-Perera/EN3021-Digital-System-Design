@@ -5,8 +5,7 @@
 module input_ram #(
     parameter int ARRAY_SIZE = 4,                  // Matrix dimension / Vector width
     parameter int DATA_WIDTH = 16,                 // Bit-width per data element
-    parameter int DEPTH      = ARRAY_SIZE,         // Memory depth (number of rows/columns)
-    parameter int ADDR_WIDTH = $clog2(DEPTH)       // Calculated address width
+    parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)  // Calculated address width
 )(
     input  logic                         clk,
     
@@ -22,7 +21,7 @@ module input_ram #(
 
     // Memory array: Depth array of N-element packed vectors
     // Quartus Prime will infer Block RAM (BRAM) for this structure
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] mem [0:DEPTH-1];
+    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] mem [0:ARRAY_SIZE-1];
 
     // Synchronous Read/Write Logic
     always_ff @(posedge clk) begin

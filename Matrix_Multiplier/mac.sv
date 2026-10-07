@@ -3,7 +3,7 @@
 
 module mac #(
     parameter int DATA_WIDTH = 16,                         // Width of input data A and B
-    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 16       // Width of accumulator (prevents overflow)
+    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 4        // Width of accumulator (prevents overflow)
 )(
     input  logic                    clk,
     input  logic                    rst_n,
@@ -52,8 +52,8 @@ module mac #(
 
             // Multiply-Accumulate Logic
             if (clr_acc) begin
-                // Reset accumulator with initial product (Cycle 0 of new compute)
-                acc_reg <= ACC_WIDTH'(mult_product);
+                // Reset accumulator to 0
+                acc_reg <= '0;
             end else begin
                 // Accumulate incoming product into previous total
                 acc_reg <= ACC_WIDTH'(mult_product) + acc_reg;

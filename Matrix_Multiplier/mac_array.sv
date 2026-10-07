@@ -4,7 +4,7 @@
 module mac_array #(
     parameter int ARRAY_SIZE = 4,                       // Grid dimension (N x N)
     parameter int DATA_WIDTH = 16,                      // Input data width
-    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 16    // Accumulator width
+    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 4    // Accumulator width
 )(
     input  logic                                                clk,
     input  logic                                                rst_n,

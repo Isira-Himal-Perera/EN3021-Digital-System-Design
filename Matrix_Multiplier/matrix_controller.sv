@@ -3,7 +3,7 @@
 // memory read/write enablers, memory read addresses, and status flags.
 
 module matrix_controller #(
-    parameter int ARRAY_SIZE = 7,                            // Matrix dimension (N)
+    parameter int ARRAY_SIZE = 4,                            // Matrix dimension (N)
     parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)            // RAM address width
 )(
     input  logic                  clk,
@@ -26,7 +26,7 @@ module matrix_controller #(
 );
 
     // Total computation cycles required for N x N systolic array = 3*N - 2
-    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE - 2;
+    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE;
     localparam int COUNTER_WIDTH = $clog2(TOTAL_CYCLES + 1);
 
     // State Encoding

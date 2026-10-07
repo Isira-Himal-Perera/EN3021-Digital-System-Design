@@ -14,8 +14,8 @@ module input_skew_buffer_tb;
     logic                                    clk;
     logic                                    rst_n;
     logic                                    enable;
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]   data_in;
-    wire  [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]   data_out;
+    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]   din;
+    wire  [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]   dout;
 
     // ref_delay_chain[row][stage]
     logic [DATA_WIDTH-1:0] ref_delay_chain [ARRAY_SIZE][ARRAY_SIZE];
@@ -28,8 +28,8 @@ module input_skew_buffer_tb;
         .clk     (clk),
         .rst_n   (rst_n),
         .enable  (enable),
-        .data_in (data_in),
-        .data_out(data_out)
+        .din     (din),
+        .din     (din)
     );
 
     // Clock Generation
@@ -48,8 +48,8 @@ module input_skew_buffer_tb;
             end
         end else if (enable) begin
             for (int r = 0; r < ARRAY_SIZE; r++) begin
-                // First stage receives data_in
-                ref_delay_chain[r][0] <= data_in[r];
+                // First stage receives din
+                ref_delay_chain[r][0] <= din[r];
                 // Subsequent stages shift data forward
                 for (int d = 1; d < ARRAY_SIZE; d++) begin
                     ref_delay_chain[r][d] <= ref_delay_chain[r][d-1];
@@ -63,7 +63,7 @@ module input_skew_buffer_tb;
         // 1. Initialize Signals
         rst_n   = 0;
         enable  = 0;
-        data_in = '0;
+        din = '0;
 
         $display("--------------------------------------------------");
         $display("Starting Input Skew Buffer Testbench (ARRAY_SIZE=%0d)", ARRAY_SIZE);
@@ -74,8 +74,8 @@ module input_skew_buffer_tb;
         rst_n = 1;
         @(posedge clk); #1;
 
-        assert(data_out === '0) 
-            else $error("Reset Check Failed! data_out non-zero after reset release.");
+        assert(din === '0) 
+            else $error("Reset Check Failed! din non-zero after reset release.");
 
         // 3. Test Case 1: Sequential Skew Verification
         $display("\n[TC1] Testing Temporal Skewing over 10 cycles...");
@@ -83,7 +83,7 @@ module input_skew_buffer_tb;
 
         for (int cycle = 1; cycle <= 10; cycle++) begin
             for (int row = 0; row < ARRAY_SIZE; row++) begin
-                data_in[row] = (16'h100 * (row + 1)) + cycle;
+                din[row] = (16'h100 * (row + 1)) + cycle;
             end
 
             drive_and_check_step();
@@ -91,7 +91,7 @@ module input_skew_buffer_tb;
 
         // 4. Test Case 2: Flush remaining skewed data with zeros
         $display("\n[TC2] Flushing Pipeline Data...");
-        data_in = '0;
+        din = '0;
         for (int cycle = 0; cycle < ARRAY_SIZE; cycle++) begin
             drive_and_check_step();
         end
@@ -100,13 +100,13 @@ module input_skew_buffer_tb;
         $display("\n[TC3] Testing Enable/Stall Behavior...");
         
         for (int row = 0; row < ARRAY_SIZE; row++) begin
-            data_in[row] = 16'hAAAA + row;
+            din[row] = 16'hAAAA + row;
         end
         drive_and_check_step();
 
         $display("Stalling pipeline (enable = 0)...");
         enable = 0;
-        data_in = '1; // Change input; outputs should hold
+        din = '1; // Change input; outputs should hold
 
         @(posedge clk); #1;
         check_skew_outputs();
@@ -136,20 +136,20 @@ module input_skew_buffer_tb;
         begin
             for (int row = 0; row < ARRAY_SIZE; row++) begin
                 if (row == 0) begin
-                    expected_val = data_in[0];
+                    expected_val = din[0];
                 end else begin
                     // Tap from the fixed shift register at stage (row - 1)
                     expected_val = ref_delay_chain[row][row-1];
                 end
 
-                assert (data_out[row] === expected_val)
+                assert (din[row] === expected_val)
                     else $error("Mismatch on Lane %0d! Expected: 0x%0h, Got: 0x%0h", 
-                                row, expected_val, data_out[row]);
+                                row, expected_val, din[row]);
             end
 
             $write("Time %0t ns | OUT: [", $time);
             for (int row = ARRAY_SIZE-1; row >= 0; row--) begin
-                $write(" L%0d:0x%0h", row, data_out[row]);
+                $write(" L%0d:0x%0h", row, din[row]);
             end
             $display(" ]");
         end

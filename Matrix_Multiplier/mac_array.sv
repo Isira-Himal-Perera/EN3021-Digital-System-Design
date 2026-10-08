@@ -14,11 +14,11 @@ module mac_array #(
     input  logic                                                enable,   // Pipeline enable
     
     // Boundary Data Streams (Skewed vectors from input buffers)
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]               a_vec,    // Row inputs (Left boundary)
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]               b_vec,    // Column inputs (Top boundary)
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]               a_vec,    // Row inputs (Left boundary)
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]               b_vec,    // Column inputs (Top boundary)
     
     // Accumulated Result Output Grid
-    output logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0] c_matrix
+    output logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0] c_matrix
 );
 
     // Internal Systolic Interconnect Wires

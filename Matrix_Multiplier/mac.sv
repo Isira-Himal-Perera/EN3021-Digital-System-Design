@@ -32,7 +32,7 @@ module mac #(
     logic signed [2*DATA_WIDTH-1:0] mult_product;
 
     // Continuous assignment for multiplication logic (mapped directly to DSP blocks)
-    assign mult_product = a_reg * b_reg;
+    assign mult_product = a_in * b_in;
 
     // Forwarding register outputs
     assign a_out   = a_reg;

@@ -12,24 +12,23 @@ module input_ram #(
     // Write Interface (Single-cycle vector load)
     input  logic                         write_en,  // Write enable flag
     input  logic [ADDR_WIDTH-1:0]        wr_addr,   // Write row/column address
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] din,       // Packed vector input data
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] din,       // Packed vector input data
     
     // Read Interface (Streams directly into skew buffers)
     input  logic [ADDR_WIDTH-1:0]        rd_addr,   // Read row/column address
-    output logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] dout       // Packed vector output data
+    output logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] dout       // Packed vector output data
 );
 
     // Memory array: Depth array of N-element packed vectors
     // Quartus Prime will infer Block RAM (BRAM) for this structure
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] mem [0:ARRAY_SIZE-1];
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] mem [0:ARRAY_SIZE-1];
 
     // Synchronous Read/Write Logic
     always_ff @(posedge clk) begin
         if (write_en) begin
             mem[wr_addr] <= din;
         end
-        // Synchronous read registered on clock edge for BRAM synthesis compatibility
-        dout <= mem[rd_addr]; 
     end
 
+    assign dout = mem[rd_addr];
 endmodule

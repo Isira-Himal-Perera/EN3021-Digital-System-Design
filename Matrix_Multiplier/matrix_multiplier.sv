@@ -15,16 +15,16 @@ module matrix_multiplier #(
     // Input RAM Write Interface: Matrix A
     input  logic                                                    wr_en_a,
     input  logic [ADDR_WIDTH-1:0]                                   wr_addr_a,
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                   wr_data_a,
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                   wr_data_a,
 
     // Input RAM Write Interface: Matrix B
     input  logic                                                    wr_en_b,
     input  logic [ADDR_WIDTH-1:0]                                   wr_addr_b,
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                   wr_data_b,
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                   wr_data_b,
 
     // Output Matrix Selection & Output Interface
     input  logic [ADDR_WIDTH-1:0]                                   rd_matrix_id,
-    output logic [ARRAY_SIZE-1:0][ACC_WIDTH-1:0]                    matrix_c_out
+    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]                    matrix_c_out
 );
 
     // -------------------------------------------------------------------------
@@ -34,15 +34,15 @@ module matrix_multiplier #(
     logic [ADDR_WIDTH-1:0]                                  rd_addr;
     
     // Imput RAM -> Skew buffer
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  ram_dout_a;
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  ram_dout_b;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  ram_dout_a;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  ram_dout_b;
 
     // Skew buffer -> MAC Array
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  skew_dout_a;
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0]                  skew_dout_b;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  skew_dout_a;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  skew_dout_b;
 
     // MAC Array -> Output RAM
-    logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0]   mac_matrix_out;
+    logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0]   mac_matrix_out;
 
     // Controller -> ...
     logic                                                   mac_en;

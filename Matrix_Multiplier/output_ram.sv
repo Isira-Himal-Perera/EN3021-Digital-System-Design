@@ -13,15 +13,15 @@ module output_ram #(
     
     // Write Interface (Parallel Load from mac_array)
     input  logic                                                write_en,  // Pulse from controller when C matrix is ready
-    input  logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0] c_matrix,  // Parallel grid from mac_array
+    input  logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0] c_matrix,  // Parallel grid from mac_array
     
     // Read Interface (Synchronous read for external bus/AXI)
     input  logic [ADDR_WIDTH-1:0]                               rd_addr,   // Row read address
-    output logic [ARRAY_SIZE-1:0][ACC_WIDTH-1:0]                dout       // Output row vector
+    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]                dout       // Output row vector
 );
 
     // Memory storage: Array of row vectors
-    logic [ARRAY_SIZE-1:0][ACC_WIDTH-1:0] mem [0:ARRAY_SIZE-1];
+    logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0] mem [0:ARRAY_SIZE-1];
 
     // Sequential Write and Read Logic
     always_ff @(posedge clk or negedge rst_n) begin
@@ -29,7 +29,6 @@ module output_ram #(
             for (int i = 0; i < ARRAY_SIZE; i++) begin
                 mem[i] <= '0;
             end
-            dout <= '0;
         end else begin
             // Parallel capture of entire result grid from systolic array
             if (write_en) begin
@@ -38,9 +37,9 @@ module output_ram #(
                 end
             end
             
-            // Synchronous read (Infers BRAM / Output Registers cleanly in Quartus)
-            dout <= mem[rd_addr];
         end
     end
+
+    assign dout = mem[rd_addr];
 
 endmodule

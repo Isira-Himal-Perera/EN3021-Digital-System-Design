@@ -3,7 +3,7 @@
 module tb_matrix_multiply_top;
 
     // -------------------------------------------------------------------------
-    // Testbench Parameters (3x3 Matrix, 8-bit Data, 16-bit Accumulator)
+    // Testbench Parameters (3x3 Matrix, 8-bit Data, 20-bit Accumulator)
     // -------------------------------------------------------------------------
     localparam int ARRAY_SIZE = 3;
     localparam int DATA_WIDTH = 8;
@@ -27,16 +27,16 @@ module tb_matrix_multiply_top;
     // Matrix A Write Interface
     logic wr_en_a;
     logic [ADDR_WIDTH-1:0] wr_addr_a;
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] wr_data_a;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_a;
 
     // Matrix B Write Interface
     logic wr_en_b;
     logic [ADDR_WIDTH-1:0] wr_addr_b;
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] wr_data_b;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_b;
 
     // Output Memory Read Interface
     logic [ADDR_WIDTH-1:0] rd_matrix_id;
-    logic [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0][ACC_WIDTH-1:0] matrix_c_out;
+    logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0] matrix_c_out;
 
     // -------------------------------------------------------------------------
     // Device Under Test (DUT) Instantiation
@@ -61,6 +61,14 @@ module tb_matrix_multiply_top;
         .rd_matrix_id  (rd_matrix_id),
         .matrix_c_out  (matrix_c_out)
     );
+
+    // -------------------------------------------------------------------------
+    // Waveform Dumping
+    // -------------------------------------------------------------------------
+    initial begin
+        $dumpfile("matrix_multiply_tb.vcd");
+        $dumpvars(0, tb_matrix_multiply_top);
+    end
 
     // -------------------------------------------------------------------------
     // Clock Generation
@@ -93,7 +101,7 @@ module tb_matrix_multiply_top;
     // Test Sequence
     // -------------------------------------------------------------------------
     initial begin
-        // Initialize signals
+        // Initialize signals synchronously before reset release
         rst_n        = 0;
         start        = 0;
         wr_en_a      = 0;
@@ -104,19 +112,17 @@ module tb_matrix_multiply_top;
         wr_data_b    = '0;
         rd_matrix_id = '0;
 
-        // Step 1: Apply and release Reset
-        #(CLK_PERIOD * 2);
-        rst_n = 1;
-        #(CLK_PERIOD);
+        // Step 1: Release reset on clock edge
+        repeat (2) @(posedge clk);
+        rst_n <= 1'b1;
+        @(posedge clk);
 
         $display("--------------------------------------------------");
         $display("Starting Matrix Memory Write...");
         $display("--------------------------------------------------");
 
-        // Step 2: Write Matrix A & Matrix B into RAM
-        // Assuming RAM stores one matrix row per address:
+        // Step 2: Write Matrix A & Matrix B into RAM (1 row per clock cycle)
         for (int i = 0; i < ARRAY_SIZE; i++) begin
-            @(posedge clk);
             wr_en_a   <= 1'b1;
             wr_addr_a <= i[ADDR_WIDTH-1:0];
             
@@ -124,22 +130,24 @@ module tb_matrix_multiply_top;
             wr_addr_b <= i[ADDR_WIDTH-1:0];
 
             for (int j = 0; j < ARRAY_SIZE; j++) begin
-                wr_data_a[j] <= matrix_a[i][j];
+                wr_data_a[j] <= matrix_a[j][i];
                 wr_data_b[j] <= matrix_b[i][j];
             end
+            @(posedge clk); // RAMs capture data at this rising edge
         end
 
-        @(posedge clk);
-        wr_en_a <= 1'b0;
-        wr_en_b <= 1'b0;
-        #(CLK_PERIOD);
+        // Step 3: Disable RAM write inputs & trigger start pulse
+        wr_en_a   <= 1'b0;
+        wr_en_b   <= 1'b0;
+        wr_addr_a <= '0;
+        wr_addr_b <= '0;
+        wr_data_a <= '0;
+        wr_data_b <= '0;
 
-        // Step 3: Trigger Multiplication
         $display("Starting Matrix Multiplication...");
-        @(posedge clk);
-        start <= 1'b1;
-        @(posedge clk);
-        start <= 1'b0;
+        start <= 1'b1;   // Pulse start high immediately after write completion
+        @(posedge clk);  // DUT samples start=1 on this edge
+        start <= 1'b0;   // Clear start signal
 
         // Step 4: Wait for execution to finish
         wait (done == 1'b1);
@@ -147,23 +155,38 @@ module tb_matrix_multiply_top;
 
         // Step 5: Read and display resulting Matrix C
         @(posedge clk);
-        rd_matrix_id <= '0; // Address 0
-        #(CLK_PERIOD);      // Wait for output memory read latency
+        rd_matrix_id <= '0;
+        @(posedge clk);  // Synchronous read latency wait
 
         $display("--------------------------------------------------");
         $display("Resulting Matrix C (3x3):");
         $display("--------------------------------------------------");
         for (int i = 0; i < ARRAY_SIZE; i++) begin
             $write("[ ");
+            rd_matrix_id = i[ADDR_WIDTH-1:0];
+            #1;
             for (int j = 0; j < ARRAY_SIZE; j++) begin
-                $write("%4d ", matrix_c_out[i][j]);
+                $write("%4d ", matrix_c_out[j]);
             end
             $display("]");
         end
         $display("--------------------------------------------------");
 
-        #(CLK_PERIOD * 5);
+        repeat (5) @(posedge clk);
         $finish;
     end
+
+    // // -------------------------------------------------------------------------
+    // // Console Hierarchical Logging for mac_array Signals
+    // // -------------------------------------------------------------------------
+    // always @(posedge clk) begin
+    //     if (busy) begin
+    //         $display("[Time %0t ns] MAC Array Active | Inputs A=%p, B=%p | Accumulated Output C=%p",
+    //                  $time,
+    //                  dut.u_mac_array.a_vec,
+    //                  dut.u_mac_array.b_vec,
+    //                  dut.u_mac_array.c_matrix);
+    //     end
+    // end
 
 endmodule

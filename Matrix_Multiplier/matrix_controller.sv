@@ -26,7 +26,7 @@ module matrix_controller #(
 );
 
     // Total computation cycles required for N x N systolic array = 3*N - 2
-    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE;
+    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE - 2;
     localparam int COUNTER_WIDTH = $clog2(TOTAL_CYCLES + 1);
 
     // State Encoding
@@ -103,7 +103,7 @@ module matrix_controller #(
             ST_COMPUTE: begin
                 mac_en    = 1'b1;
                 mem_rd_en = (cycle_cnt < ARRAY_SIZE); // Stream input data for N cycles
-                skew_en   = (cycle_cnt < 2*ARRAY_SIZE-3);
+                skew_en   = (cycle_cnt < 2*ARRAY_SIZE-1);
 
                 if (cycle_cnt == TOTAL_CYCLES - 1) begin
                     next_state = ST_DONE;

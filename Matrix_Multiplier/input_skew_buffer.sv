@@ -13,14 +13,14 @@ module input_skew_buffer #(
     input  logic                                 mem_rd_en, // When low (0), inputs are forced to 0
     
     // Parallel un-skewed input vector from BRAM/Buffers
-    input  logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] din,
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] din,
     
     // Time-skewed output vector fed directly into mac_array
-    output logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] dout
+    output logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] dout
 );
 
     // Gated input data vector based on the mem_rd_en signal
-    logic [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] effective_data_in;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] effective_data_in;
 
     // Direct zeros into the pipeline when mem_rd_en is 0
     assign effective_data_in = mem_rd_en ? din : '0;

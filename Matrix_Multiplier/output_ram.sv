@@ -4,20 +4,20 @@
 //              vector/word reading for external interfaces.
 
 module output_ram #(
-    parameter int ARRAY_SIZE = 4,                         // Matrix dimension (N)
-    parameter int ACC_WIDTH  = 36,     // Accumulator/Output bit-width
-    parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)              // Address width
+    parameter int ARRAY_SIZE = 7,                   // Matrix dimension (N)
+    parameter int ACC_WIDTH  = 36,                  // Accumulator/Output bit-width
+    parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)   // Address width
 )(
     input  logic                                                clk,
     input  logic                                                rst_n,
-    
+
     // Write Interface (Parallel Load from mac_array)
-    input  logic                                                write_en,  // Pulse from controller when C matrix is ready
-    input  logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0] c_matrix,  // Parallel grid from mac_array
-    
+    input  logic                                                write_en,   // Pulse from controller when C matrix is ready
+    input  logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0] c_matrix,   // Parallel grid from mac_array
+
     // Read Interface (Synchronous read for external bus/AXI)
-    input  logic [ADDR_WIDTH-1:0]                               rd_addr,   // Row read address
-    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]                dout       // Output row vector
+    input  logic [ADDR_WIDTH-1:0]                               rd_addr,    // Row read address
+    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]                dout        // Output row vector
 );
 
     // Memory storage: Array of row vectors
@@ -36,7 +36,6 @@ module output_ram #(
                     mem[r] <= c_matrix[r];
                 end
             end
-            
         end
     end
 

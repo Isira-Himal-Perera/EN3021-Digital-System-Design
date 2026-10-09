@@ -3,21 +3,21 @@
 // memory read/write enablers, memory read addresses, and status flags.
 
 module matrix_controller #(
-    parameter int ARRAY_SIZE = 4,                            // Matrix dimension (N)
+    parameter int ARRAY_SIZE = 7,                            // Matrix dimension (N)
     parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)            // RAM address width
 )(
     input  logic                  clk,
     input  logic                  rst_n,
-    
+
     // External Interface Control
     input  logic                  start,                     // Pulse to trigger matrix multiplication
     output logic                  busy,                      // Asserted high during computation
     output logic                  done,                      // Single-cycle pulse when C matrix results are valid
-    
+
     // Internal Array Control Signals
     output logic                  clr_acc,                   // Resets MAC accumulators
     output logic                  mac_en,                    // Enables MAC array and input skew registers
-    
+
     // Memory Interface Control Signals
     output logic                  skew_en,
     output logic                  mem_rd_en,                 // Enables reading Matrix A and B from RAM
@@ -26,7 +26,7 @@ module matrix_controller #(
 );
 
     // Total computation cycles required for N x N systolic array = 3*N - 2
-    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE - 2;
+    localparam int TOTAL_CYCLES  = 3 * ARRAY_SIZE - 1;
     localparam int COUNTER_WIDTH = $clog2(TOTAL_CYCLES + 1);
 
     // State Encoding
@@ -52,7 +52,7 @@ module matrix_controller #(
             rd_addr_cnt   <= '0;
         end else begin
             current_state <= next_state;
-            
+
             // Cycle counter logic for array execution timing
             if (current_state == ST_COMPUTE) begin
                 cycle_cnt <= cycle_cnt + 1'b1;

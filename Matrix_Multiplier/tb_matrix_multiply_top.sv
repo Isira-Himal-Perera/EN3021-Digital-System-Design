@@ -7,7 +7,7 @@ module tb_matrix_multiply_top;
     // -------------------------------------------------------------------------
     localparam int ARRAY_SIZE = 3;
     localparam int DATA_WIDTH = 8;
-    localparam int ACC_WIDTH  = 20;
+    localparam int ACC_WIDTH  = (2 * DATA_WIDTH) + $clog2(ARRAY_SIZE);
     localparam int ADDR_WIDTH = $clog2(ARRAY_SIZE);
 
     // Clock period (100 MHz)
@@ -26,17 +26,17 @@ module tb_matrix_multiply_top;
 
     // Matrix A Write Interface
     logic wr_en_a;
-    logic [ADDR_WIDTH-1:0] wr_addr_a;
+    logic [ADDR_WIDTH-1:0]               wr_addr_a;
     logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_a;
 
     // Matrix B Write Interface
     logic wr_en_b;
-    logic [ADDR_WIDTH-1:0] wr_addr_b;
+    logic [ADDR_WIDTH-1:0]               wr_addr_b;
     logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_b;
 
     // Output Memory Read Interface
-    logic [ADDR_WIDTH-1:0] rd_matrix_id;
-    logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0] matrix_c_out;
+    logic [ADDR_WIDTH-1:0]               rd_matrix_id;
+    logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]  matrix_c_out;
 
     // -------------------------------------------------------------------------
     // Device Under Test (DUT) Instantiation
@@ -47,19 +47,19 @@ module tb_matrix_multiply_top;
         .ACC_WIDTH  (ACC_WIDTH),
         .ADDR_WIDTH (ADDR_WIDTH)
     ) dut (
-        .clk           (clk),
-        .rst_n         (rst_n),
-        .start         (start),
-        .busy          (busy),
-        .done          (done),
-        .wr_en_a       (wr_en_a),
-        .wr_addr_a     (wr_addr_a),
-        .wr_data_a     (wr_data_a),
-        .wr_en_b       (wr_en_b),
-        .wr_addr_b     (wr_addr_b),
-        .wr_data_b     (wr_data_b),
-        .rd_matrix_id  (rd_matrix_id),
-        .matrix_c_out  (matrix_c_out)
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .start        (start),
+        .busy         (busy),
+        .done         (done),
+        .wr_en_a      (wr_en_a),
+        .wr_addr_a    (wr_addr_a),
+        .wr_data_a    (wr_data_a),
+        .wr_en_b      (wr_en_b),
+        .wr_addr_b    (wr_addr_b),
+        .wr_data_b    (wr_data_b),
+        .rd_matrix_id (rd_matrix_id),
+        .matrix_c_out (matrix_c_out)
     );
 
     // -------------------------------------------------------------------------
@@ -125,7 +125,7 @@ module tb_matrix_multiply_top;
         for (int i = 0; i < ARRAY_SIZE; i++) begin
             wr_en_a   <= 1'b1;
             wr_addr_a <= i[ADDR_WIDTH-1:0];
-            
+
             wr_en_b   <= 1'b1;
             wr_addr_b <= i[ADDR_WIDTH-1:0];
 
@@ -155,8 +155,6 @@ module tb_matrix_multiply_top;
 
         // Step 5: Read and display resulting Matrix C
         @(posedge clk);
-        rd_matrix_id <= '0;
-        @(posedge clk);  // Synchronous read latency wait
 
         $display("--------------------------------------------------");
         $display("Resulting Matrix C (3x3):");
@@ -166,9 +164,10 @@ module tb_matrix_multiply_top;
             rd_matrix_id = i[ADDR_WIDTH-1:0];
             #1;
             for (int j = 0; j < ARRAY_SIZE; j++) begin
-                $write("%4d ", matrix_c_out[j]);
+                $write("%4d ", $signed(matrix_c_out[j]));
             end
             $display("]");
+            @(posedge clk);
         end
         $display("--------------------------------------------------");
 

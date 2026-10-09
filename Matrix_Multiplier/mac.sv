@@ -2,24 +2,24 @@
 // Description: Parameterized Multiply-Accumulate (MAC) Processing Element
 
 module mac #(
-    parameter int DATA_WIDTH = 16,                         // Width of input data A and B
-    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 4        // Width of accumulator (prevents overflow)
+    parameter int DATA_WIDTH = 16,                      // Width of input data A and B
+    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + 4     // Width of accumulator (prevents overflow)
 )(
     input  logic                    clk,
     input  logic                    rst_n,
-    
+
     // Control Signals
-    input  logic                    clr_acc,    // Clears accumulator for a new dot-product
-    input  logic                    enable,     // Clock enable for computing pipeline
-    
+    input  logic                    clr_acc,            // Clears accumulator for a new dot-product
+    input  logic                    enable,             // Clock enable for computing pipeline
+
     // Data Inputs
     input  logic [DATA_WIDTH-1:0]   a_in,
     input  logic [DATA_WIDTH-1:0]   b_in,
-    
+
     // Systolic Forwarding Outputs (Passes inputs to adjacent PEs)
     output logic [DATA_WIDTH-1:0]   a_out,
     output logic [DATA_WIDTH-1:0]   b_out,
-    
+
     // Accumulated Result Output
     output logic [ACC_WIDTH-1:0]    acc_out
 );
@@ -32,7 +32,7 @@ module mac #(
     logic signed [2*DATA_WIDTH-1:0] mult_product;
 
     // Continuous assignment for multiplication logic (mapped directly to DSP blocks)
-    assign mult_product = a_in * b_in;
+    assign mult_product = a_reg * b_reg;
 
     // Forwarding register outputs
     assign a_out   = a_reg;

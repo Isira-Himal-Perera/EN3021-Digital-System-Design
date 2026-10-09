@@ -1,65 +1,69 @@
+// File: matrix_multiplier.sv
+// Description: Top-level Systolic Array Matrix Multiplier integrating input RAMs, 
+//              input skew buffers, FSM controller, MAC array, and output RAM.
+
 module matrix_multiplier #(
-    parameter int ARRAY_SIZE = 4,
+    parameter int ARRAY_SIZE = 7,
     parameter int DATA_WIDTH = 16,
-    parameter int ACC_WIDTH  = 34,
+    parameter int ACC_WIDTH  = (2 * DATA_WIDTH) + $clog2(ARRAY_SIZE),
     parameter int ADDR_WIDTH = $clog2(ARRAY_SIZE)
 )(
-    input  logic                                                    clk,
-    input  logic                                                    rst_n,
+    input  logic                                clk,
+    input  logic                                rst_n,
 
     // Control Interface
-    input  logic                                                    start,
-    output logic                                                    busy,
-    output logic                                                    done,
+    input  logic                                start,
+    output logic                                busy,
+    output logic                                done,
 
     // Input RAM Write Interface: Matrix A
-    input  logic                                                    wr_en_a,
-    input  logic [ADDR_WIDTH-1:0]                                   wr_addr_a,
-    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                   wr_data_a,
+    input  logic                                wr_en_a,
+    input  logic [ADDR_WIDTH-1:0]               wr_addr_a,
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_a,
 
     // Input RAM Write Interface: Matrix B
-    input  logic                                                    wr_en_b,
-    input  logic [ADDR_WIDTH-1:0]                                   wr_addr_b,
-    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                   wr_data_b,
+    input  logic                                wr_en_b,
+    input  logic [ADDR_WIDTH-1:0]               wr_addr_b,
+    input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] wr_data_b,
 
     // Output Matrix Selection & Output Interface
-    input  logic [ADDR_WIDTH-1:0]                                   rd_matrix_id,
-    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]                    matrix_c_out
+    input  logic [ADDR_WIDTH-1:0]               rd_matrix_id,
+    output logic [0:ARRAY_SIZE-1][ACC_WIDTH-1:0]  matrix_c_out
 );
 
     // -------------------------------------------------------------------------
     // Internal Signals
     // -------------------------------------------------------------------------
-    // Controller -> Imput RAM
-    logic [ADDR_WIDTH-1:0]                                  rd_addr;
-    
-    // Imput RAM -> Skew buffer
-    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  ram_dout_a;
-    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  ram_dout_b;
+    // Controller -> Input RAM
+    logic [ADDR_WIDTH-1:0]                                rd_addr;
+
+    // Input RAM -> Skew buffer
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                ram_dout_a;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                ram_dout_b;
 
     // Skew buffer -> MAC Array
-    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  skew_dout_a;
-    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                  skew_dout_b;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                skew_dout_a;
+    logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0]                skew_dout_b;
 
     // MAC Array -> Output RAM
-    logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0]   mac_matrix_out;
+    logic [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1][ACC_WIDTH-1:0] mac_matrix_out;
 
-    // Controller -> ...
-    logic                                                   mac_en;
-    logic                                                   clr_acc;
-    logic                                                   skew_en;
-    logic                                                   rd_en;
-    logic                                                   capture_en;
+    // Controller -> Array & Memories
+    logic                                                 mac_en;
+    logic                                                 clr_acc;
+    logic                                                 skew_en;
+    logic                                                 rd_en;
+    logic                                                 capture_en;
 
     // -------------------------------------------------------------------------
     // 1. Input Memory Instances 
     // -------------------------------------------------------------------------
     input_ram #(
-        .ARRAY_SIZE (ARRAY_SIZE), 
+        .ARRAY_SIZE (ARRAY_SIZE),
         .DATA_WIDTH (DATA_WIDTH)
     ) u_input_ram_a (
-        .clk        (clk),          
-        .write_en   (wr_en_a),      
+        .clk        (clk),
+        .write_en   (wr_en_a),
         .wr_addr    (wr_addr_a),
         .din        (wr_data_a),
         .rd_addr    (rd_addr),
@@ -146,16 +150,16 @@ module matrix_multiplier #(
     // 5. Output Parallel Memory
     // -------------------------------------------------------------------------
     output_ram #(
-        .ARRAY_SIZE   (ARRAY_SIZE),
-        .ACC_WIDTH    (ACC_WIDTH),
-        .ADDR_WIDTH   (ADDR_WIDTH)
+        .ARRAY_SIZE  (ARRAY_SIZE),
+        .ACC_WIDTH   (ACC_WIDTH),
+        .ADDR_WIDTH  (ADDR_WIDTH)
     ) u_output_ram (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .write_en     (capture_en),
-        .c_matrix     (mac_matrix_out),
-        .rd_addr      (rd_matrix_id),
-        .dout         (matrix_c_out)
+        .clk         (clk),
+        .rst_n       (rst_n),
+        .write_en    (capture_en),
+        .c_matrix    (mac_matrix_out),
+        .rd_addr     (rd_matrix_id),
+        .dout        (matrix_c_out)
     );
 
-endmodule 
+endmodule

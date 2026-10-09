@@ -4,17 +4,17 @@
 //              data_valid / zeroing control signal.
 
 module input_skew_buffer #(
-    parameter int ARRAY_SIZE = 4,   // Number of rows/columns (N)
+    parameter int ARRAY_SIZE = 7,   // Number of rows/columns (N)
     parameter int DATA_WIDTH = 16   // Bit-width of input data
 )(
-    input  logic                                 clk,
-    input  logic                                 rst_n,
-    input  logic                                 enable,     // Pipeline control
-    input  logic                                 mem_rd_en, // When low (0), inputs are forced to 0
-    
+    input  logic                                clk,
+    input  logic                                rst_n,
+    input  logic                                enable,     // Pipeline control
+    input  logic                                mem_rd_en,  // When low (0), inputs are forced to 0
+
     // Parallel un-skewed input vector from BRAM/Buffers
     input  logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] din,
-    
+
     // Time-skewed output vector fed directly into mac_array
     output logic [0:ARRAY_SIZE-1][DATA_WIDTH-1:0] dout
 );
@@ -28,7 +28,7 @@ module input_skew_buffer #(
     genvar i;
     generate
         for (i = 0; i < ARRAY_SIZE; i++) begin : gen_skew_line
-            
+
             if (i == 0) begin : gen_no_delay
                 // Row/Col 0 requires 0 cycles delay
                 assign dout[0] = effective_data_in[0];
@@ -44,7 +44,7 @@ module input_skew_buffer #(
                     end else if (enable) begin
                         // First stage takes gated input data
                         shift_reg[0] <= effective_data_in[i];
-                        
+
                         // Remaining stages shift data forward
                         for (int k = 1; k < i; k++) begin
                             shift_reg[k] <= shift_reg[k-1];
